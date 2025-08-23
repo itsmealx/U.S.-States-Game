@@ -4,13 +4,22 @@ import turtle
 class GameManager:
     def __init__(self):
         self._data = pd.read_csv("game_data/50_states.csv")
-        self._correct_answer = []
+        self._correct_answers = []
         self.score = 0
         self.items = len(self.states_list)
 
     @property
     def states_list(self):
         return self._data["state"].tolist()
+
+    def load_previous_score(self):
+        try:
+            saved_data = pd.read_csv("game_data/correct_answers.csv")
+        except FileNotFoundError:
+            print("No previous game data.")
+        else:
+            self._correct_answers = saved_data["state"].tolist()
+            self.score = len(self._correct_answers)
 
     def get_coordinates(self, state_name: str) -> tuple:
         """Get the answer from the user as the state name and returns the location."""
@@ -22,13 +31,16 @@ class GameManager:
 
     def check_answer(self, answer: str):
         if answer in self.states_list:
-            self._correct_answer.append(answer)
+            self._correct_answers.append(answer)
             squirtle = turtle.Turtle()
             squirtle.penup()
             squirtle.hideturtle()
             squirtle.goto(self.get_coordinates(answer))
             squirtle.write(answer, align="center", font=("Arial", 9, "normal"))
             self.score += 1
+
+    def is_already_guessed(self, state_name):
+        return state_name in self._correct_answers
 
     def save_correct_answer(self):
         """Save correct answers in a CSV file."""
@@ -38,7 +50,7 @@ class GameManager:
             "y": []
         }
 
-        for state_name in self._correct_answer:
+        for state_name in self._correct_answers:
             state_row = self._data[self._data["state"] == state_name]#getting Row data
             if not state_row.empty:
                 x = state_row["x"].item()
